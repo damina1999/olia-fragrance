@@ -79,7 +79,7 @@ export default function MyOrders() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">{item.product?.name || 'Produit supprimé'}</p>
-                        <p className="text-xs text-gray-500">Qté : {item.quantity} × {item.price?.toFixed(2)} €</p>
+                        <p className="text-xs text-gray-500">Qté : {item.quantity} × {item.price?.toFixed(2)} dt</p>
                       </div>
                     </div>
                   ))}
@@ -89,7 +89,7 @@ export default function MyOrders() {
                   <p className="text-sm text-gray-500">
                     {order.shippingAddress?.city}, {order.shippingAddress?.country}
                   </p>
-                  <p className="font-bold text-gray-900">{order.totalAmount?.toFixed(2)} €</p>
+                  <p className="font-bold text-gray-900">{order.totalAmount?.toFixed(2)} dt</p>
                 </div>
               </div>
             ))}

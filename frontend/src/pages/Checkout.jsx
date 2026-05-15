@@ -13,7 +13,7 @@ export default function Checkout() {
   });
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
-  const shipping = total > 5000 ? 0 : 500;
+  const shipping = 8;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

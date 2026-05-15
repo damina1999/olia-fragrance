@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { FiGrid, FiPackage, FiShoppingBag, FiUsers, FiLogOut, FiMessageSquare } from 'react-icons/fi';
+import { FiGrid, FiPackage, FiShoppingBag, FiUsers, FiLogOut, FiMessageSquare, FiImage } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 
 const links = [
@@ -7,6 +7,7 @@ const links = [
   { to: '/admin/products', label: 'Produits', icon: FiPackage },
   { to: '/admin/orders', label: 'Commandes', icon: FiShoppingBag },
   { to: '/admin/reviews', label: 'Commentaires', icon: FiMessageSquare },
+  { to: '/admin/events', label: 'Événements', icon: FiImage },
   { to: '/admin/users', label: 'Utilisateurs', icon: FiUsers },
 ];
 

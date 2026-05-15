@@ -38,4 +38,10 @@ router.put('/users/:id/role', ctrl.updateUserRole);
 router.get('/reviews', ctrl.getAllReviews);
 router.delete('/reviews/:id', ctrl.deleteReview);
 
+// Events
+router.get('/events', ctrl.getEvents);
+router.post('/events', uploadMiddleware('images', 1), ctrl.createEvent);
+router.put('/events/:id', uploadMiddleware('images', 1), ctrl.updateEvent);
+router.delete('/events/:id', ctrl.deleteEvent);
+
 module.exports = router;

@@ -22,6 +22,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminReviews from './pages/admin/AdminReviews';
+import AdminEvents from './pages/admin/AdminEvents';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ export default function App() {
               <Route path="orders" element={<AdminOrders />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="events" element={<AdminEvents />} />
             </Route>
           </Routes>
         </CartProvider>

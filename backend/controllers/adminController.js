@@ -154,6 +154,42 @@ exports.updateUserRole = async (req, res) => {
   }
 };
 
+// Events
+const Event = require('../models/Event');
+
+exports.getEvents = async (req, res) => {
+  try {
+    const events = await Event.find().sort({ order: 1, createdAt: -1 });
+    res.json(events);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.createEvent = async (req, res) => {
+  try {
+    const image = req.files?.[0]?.path || req.body.image || '';
+    const event = await Event.create({ ...req.body, image });
+    res.status(201).json(event);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.updateEvent = async (req, res) => {
+  try {
+    const image = req.files?.[0]?.path || req.body.image;
+    const update = { ...req.body };
+    if (image) update.image = image;
+    const event = await Event.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!event) return res.status(404).json({ message: 'Événement introuvable' });
+    res.json(event);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.deleteEvent = async (req, res) => {
+  try {
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Événement supprimé' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
 // Reviews
 const Review = require('../models/Review');
 
