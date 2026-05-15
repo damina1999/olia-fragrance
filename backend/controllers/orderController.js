@@ -4,18 +4,53 @@ const Product = require('../models/Product');
 exports.createOrder = async (req, res) => {
   const { items, shippingAddress, paymentMethod, notes } = req.body;
   try {
-    // Validate stock and compute total
     let totalPrice = 0;
     const orderItems = [];
+
     for (const item of items) {
       const product = await Product.findById(item.product);
-      if (!product || !product.isActive) return res.status(400).json({ message: `Produit indisponible: ${item.product}` });
-      if (product.stock < item.quantity) return res.status(400).json({ message: `Stock insuffisant pour ${product.name}` });
-      totalPrice += product.price * item.quantity;
-      orderItems.push({ product: product._id, name: product.name, image: product.images[0], price: product.price, quantity: item.quantity });
-      product.stock -= item.quantity;
+      if (!product || !product.isActive) return res.status(400).json({ message: `Produit indisponible` });
+
+      // Use client-sent price (variant price) or fallback to product price
+      const unitPrice = item.price ? Number(item.price) : product.price;
+      const volume = item.volume || product.volume || '';
+
+      // Find matching variant to check stock
+      let stockAvailable = product.stock;
+      if (product.variants?.length && volume) {
+        const variant = product.variants.find(v => v.volume === volume);
+        if (variant) stockAvailable = variant.stock;
+      }
+
+      if (stockAvailable < item.quantity) {
+        return res.status(400).json({ message: `Stock insuffisant pour ${product.name} ${volume}` });
+      }
+
+      totalPrice += unitPrice * item.quantity;
+      orderItems.push({
+        product: product._id,
+        name: item.name || product.name,
+        image: product.images?.[0] || '',
+        price: unitPrice,
+        volume,
+        quantity: item.quantity,
+      });
+
+      // Decrease stock
+      if (product.variants?.length && volume) {
+        const vIdx = product.variants.findIndex(v => v.volume === volume);
+        if (vIdx !== -1) {
+          product.variants[vIdx].stock -= item.quantity;
+          product.stock = product.variants.reduce((s, v) => s + v.stock, 0);
+          product.markModified('variants');
+        }
+      } else {
+        product.stock -= item.quantity;
+      }
       await product.save();
     }
+
+    const shippingPrice = totalPrice >= 100 ? 0 : 8;
 
     const order = await Order.create({
       user: req.user._id,
@@ -23,7 +58,7 @@ exports.createOrder = async (req, res) => {
       shippingAddress,
       paymentMethod,
       totalPrice,
-      shippingPrice: totalPrice > 100 ? 0 : 8,
+      shippingPrice,
       notes,
     });
     res.status(201).json(order);

@@ -22,27 +22,30 @@ export default function Cart() {
       <div className="grid md:grid-cols-3 gap-8">
         {/* Items */}
         <div className="md:col-span-2 space-y-4">
-          {cart.map(item => (
-            <div key={item._id} className="card flex gap-4 p-4">
+          {cart.map(item => {
+            const key = item.cartKey || `${item._id}_${item.variantVolume || item.volume || 'default'}`;
+            return (
+            <div key={key} className="card flex gap-4 p-4">
               <img src={item.images?.[0] || '/placeholder.jpg'} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
               <div className="flex-1">
                 <p className="text-xs text-gold-500 font-medium">{item.brand}</p>
                 <h3 className="font-semibold">{item.name}</h3>
-                <p className="text-sm text-gray-500">{item.volume}</p>
+                <p className="text-sm text-gray-500">{item.variantVolume || item.volume || ''}</p>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center border rounded-lg overflow-hidden">
-                    <button onClick={() => updateQuantity(item._id, item.quantity - 1)} className="px-2 py-1 hover:bg-gray-100"><FiMinus size={14} /></button>
+                    <button onClick={() => updateQuantity(key, item.quantity - 1)} className="px-2 py-1 hover:bg-gray-100"><FiMinus size={14} /></button>
                     <span className="px-3 text-sm">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item._id, item.quantity + 1)} className="px-2 py-1 hover:bg-gray-100"><FiPlus size={14} /></button>
+                    <button onClick={() => updateQuantity(key, item.quantity + 1)} className="px-2 py-1 hover:bg-gray-100"><FiPlus size={14} /></button>
                   </div>
                   <span className="font-bold">{(item.price * item.quantity).toLocaleString()} DT</span>
-                  <button onClick={() => removeFromCart(item._id)} className="text-red-400 hover:text-red-600 transition">
+                  <button onClick={() => removeFromCart(key)} className="text-red-400 hover:text-red-600 transition">
                     <FiTrash2 />
                   </button>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Summary */}

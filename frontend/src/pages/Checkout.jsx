@@ -21,7 +21,13 @@ export default function Checkout() {
     setLoading(true);
     try {
       const { data } = await api.post('/orders', {
-        items: cart.map(i => ({ product: i._id, quantity: i.quantity })),
+        items: cart.map(i => ({
+          product: i._id,
+          quantity: i.quantity,
+          price: i.price,
+          volume: i.variantVolume || i.volume || '',
+          name: i.name,
+        })),
         shippingAddress: form,
         paymentMethod,
       });
@@ -69,12 +75,15 @@ export default function Checkout() {
         <div>
           <h2 className="font-semibold text-lg mb-4">Votre commande</h2>
           <div className="bg-gray-50 rounded-2xl p-5 space-y-3 mb-4">
-            {cart.map(item => (
-              <div key={item._id} className="flex justify-between text-sm">
-                <span>{item.name} × {item.quantity}</span>
+            {cart.map(item => {
+              const key = item.cartKey || `${item._id}_${item.variantVolume || item.volume || 'default'}`;
+              return (
+              <div key={key} className="flex justify-between text-sm">
+                <span>{item.name} {item.variantVolume || item.volume ? `(${item.variantVolume || item.volume})` : ''} × {item.quantity}</span>
                 <span className="font-medium">{(item.price * item.quantity).toLocaleString()} DT</span>
               </div>
-            ))}
+              );
+            })}
             <div className="border-t pt-3 space-y-1 text-sm">
               <div className="flex justify-between"><span>Sous-total</span><span>{total.toLocaleString()} DT</span></div>
               <div className="flex justify-between"><span>Livraison</span><span>{shipping === 0 ? 'Gratuite' : `${shipping} DT`}</span></div>
