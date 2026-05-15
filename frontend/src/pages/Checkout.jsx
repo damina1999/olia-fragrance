@@ -55,8 +55,8 @@ export default function Checkout() {
           <h2 className="font-semibold text-lg pt-2">Mode de paiement</h2>
           {[
             { value: 'cash', label: '💵 Paiement à la livraison' },
-            { value: 'card', label: '💳 Carte bancaire' },
-            { value: 'paypal', label: '🅿️ PayPal' },
+            // { value: 'card', label: '💳 Carte bancaire' },
+            // { value: 'paypal', label: '🅿️ PayPal' },
           ].map(m => (
             <label key={m.value} className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:border-gold-400 transition">
               <input type="radio" name="payment" value={m.value} checked={paymentMethod === m.value} onChange={() => setPaymentMethod(m.value)} className="accent-gold-500" />

@@ -51,7 +51,7 @@ export default function Cart() {
           <div className="space-y-2 text-sm mb-4">
             <div className="flex justify-between"><span>Sous-total</span><span>{total.toLocaleString()} DT</span></div>
             <div className="flex justify-between"><span>Livraison</span><span>{shipping === 0 ? <span className="text-green-600">Gratuite</span> : `${shipping} DT`}</span></div>
-            {shipping > 0 && <p className="text-xs text-gray-400">Livraison gratuite dès 5000 DT</p>}
+            {shipping > 0 && <p className="text-xs text-gray-400">Livraison gratuite dès 100 DT</p>}
           </div>
           <div className="border-t pt-3 flex justify-between font-bold text-lg mb-5">
             <span>Total</span><span>{(total + shipping).toLocaleString()} DT</span>
