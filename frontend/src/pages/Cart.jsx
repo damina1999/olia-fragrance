@@ -14,7 +14,7 @@ export default function Cart() {
     </div>
   );
 
-  const shipping = total > 5000 ? 0 : 500;
+  const shipping = total >= 100 ? 0 : 8;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">

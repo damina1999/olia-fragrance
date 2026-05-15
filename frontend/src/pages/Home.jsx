@@ -166,7 +166,7 @@ export default function Home() {
 
       {/* Banner */}
       <section className="bg-gradient-to-r from-dark-900 to-dark-800 text-white py-16 text-center">
-        <h2 className="font-serif text-3xl mb-3">Livraison 8 DT partout en Tunisie</h2>
+        <h2 className="font-serif text-3xl mb-3">Livraison 8 DT — Gratuite dès 100 DT</h2>
         <p className="text-white/60 mb-6">Commandez maintenant et recevez votre parfum en 24-48h</p>
         <Link to="/products" className="btn-primary px-10 py-3 text-base">Commander maintenant</Link>
       </section>
