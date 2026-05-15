@@ -185,3 +185,41 @@ exports.updateMe = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// GET /api/auth/profile
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password -verificationToken -resetPasswordToken -resetPasswordExpire -otp -otpExpire');
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// PUT /api/auth/profile
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, phone, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+
+    if (newPassword) {
+      if (!currentPassword) return res.status(400).json({ message: 'Mot de passe actuel requis' });
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) return res.status(400).json({ message: 'Mot de passe actuel incorrect' });
+      user.password = newPassword;
+    }
+
+    await user.save();
+    res.json({
+      message: 'Profil mis à jour',
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

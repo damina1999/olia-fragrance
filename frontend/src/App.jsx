@@ -14,6 +14,8 @@ import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import MyOrders from './pages/MyOrders';
+import Profile from './pages/Profile';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -61,6 +63,8 @@ export default function App() {
             {/* Protected */}
             <Route path="/checkout" element={<PrivateRoute><Layout><Checkout /></Layout></PrivateRoute>} />
             <Route path="/dashboard" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
+            <Route path="/orders" element={<PrivateRoute><Layout><MyOrders /></Layout></PrivateRoute>} />
+            <Route path="/profile" element={<PrivateRoute><Layout><Profile /></Layout></PrivateRoute>} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>

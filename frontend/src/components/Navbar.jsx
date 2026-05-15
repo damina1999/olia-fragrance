@@ -49,10 +49,17 @@ export default function Navbar() {
               {user.role === 'admin' && (
                 <Link to="/admin" className="hover:text-gold-400 transition">Admin</Link>
               )}
-              <Link to="/dashboard" className="hover:text-gold-400 transition flex items-center gap-1">
-                <FiUser size={16} /> {user.name}
-              </Link>
-              <button onClick={logout} className="hover:text-red-400 transition text-sm">Déconnexion</button>
+              <div className="relative group">
+                <button className="hover:text-gold-400 transition flex items-center gap-1">
+                  <FiUser size={16} /> {user.name}
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-44 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <Link to="/dashboard" className="block px-4 py-2.5 text-sm hover:bg-gray-50 rounded-t-xl">Mon compte</Link>
+                  <Link to="/orders" className="block px-4 py-2.5 text-sm hover:bg-gray-50">Mes commandes</Link>
+                  <Link to="/profile" className="block px-4 py-2.5 text-sm hover:bg-gray-50">Mon profil</Link>
+                  <button onClick={logout} className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 rounded-b-xl">Déconnexion</button>
+                </div>
+              </div>
             </>
           ) : (
             <Link to="/login" className="hover:text-gold-400 transition flex items-center gap-1">
@@ -93,6 +100,8 @@ export default function Navbar() {
           {user ? (
             <>
               <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Mon compte</Link>
+              <Link to="/orders" onClick={() => setMenuOpen(false)}>Mes commandes</Link>
+              <Link to="/profile" onClick={() => setMenuOpen(false)}>Mon profil</Link>
               {user.role === 'admin' && <Link to="/admin" onClick={() => setMenuOpen(false)}>Admin</Link>}
               <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left text-red-400">Déconnexion</button>
             </>

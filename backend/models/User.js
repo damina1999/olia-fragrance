@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   resetOtp: { type: String },
   resetOtpExpire: { type: Date },
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  phone: { type: String, default: '' },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
