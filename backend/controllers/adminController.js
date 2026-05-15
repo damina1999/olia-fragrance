@@ -58,18 +58,22 @@ exports.getProducts = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     const images = req.files?.map(f => f.path) || [];
+    let variants = [];
+    try { variants = JSON.parse(req.body.variants || '[]'); } catch {}
     const data = {
       name: req.body.name,
       description: req.body.description,
       brand: req.body.brand,
-      volume: req.body.volume || '',
       category: req.body.category,
-      price: Number(req.body.price),
-      oldPrice: req.body.oldPrice ? Number(req.body.oldPrice) : undefined,
-      stock: Number(req.body.stock),
       isFeatured: req.body.isFeatured === 'true',
       isActive: req.body.isActive !== 'false',
       images,
+      variants,
+      // legacy fallback
+      price: variants.length ? (variants[0].price || 0) : Number(req.body.price || 0),
+      oldPrice: req.body.oldPrice ? Number(req.body.oldPrice) : undefined,
+      volume: req.body.volume || '',
+      stock: variants.length ? variants.reduce((s, v) => s + (v.stock || 0), 0) : Number(req.body.stock || 0),
     };
     const product = await Product.create(data);
     res.status(201).json(product);
@@ -80,15 +84,21 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    // Remove fields that should not be updated via form
     const { likes, dislikes, avgRating, reviewCount, createdAt, updatedAt, _id, __v, ...rest } = req.body;
+    let variants = [];
+    try { variants = JSON.parse(rest.variants || '[]'); } catch {}
     const update = {
-      ...rest,
-      price: Number(rest.price),
-      oldPrice: rest.oldPrice ? Number(rest.oldPrice) : undefined,
-      stock: Number(rest.stock),
+      name: rest.name,
+      description: rest.description,
+      brand: rest.brand,
+      category: rest.category,
       isFeatured: rest.isFeatured === 'true',
       isActive: rest.isActive !== 'false',
+      variants,
+      price: variants.length ? (variants[0].price || 0) : Number(rest.price || 0),
+      oldPrice: rest.oldPrice ? Number(rest.oldPrice) : undefined,
+      volume: rest.volume || '',
+      stock: variants.length ? variants.reduce((s, v) => s + (v.stock || 0), 0) : Number(rest.stock || 0),
     };
     if (req.files?.length) update.images = req.files.map(f => f.path);
     const product = await Product.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
