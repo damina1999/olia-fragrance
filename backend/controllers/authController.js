@@ -31,28 +31,17 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Email déjà utilisé' });
     }
 
-    const otp = generateOtp();
     const user = await User.create({
       name,
       email,
       password,
-      isVerified: false,
-      emailOtp: otp,
-      emailOtpExpire: new Date(Date.now() + 15 * 60 * 1000), // 15 min
+      isVerified: true, // Auto-verified, no email required
     });
 
-    // Send verification email
-    try {
-      await sendVerificationEmail(email, name, otp);
-    } catch (mailErr) {
-      console.error('Mail error:', mailErr.message);
-      // Don't block registration if mail fails
-    }
-
     res.status(201).json({
-      message: 'Compte créé. Vérifiez votre email pour activer votre compte.',
+      message: 'Compte créé avec succès.',
       email,
-      requiresVerification: true,
+      requiresVerification: false,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
