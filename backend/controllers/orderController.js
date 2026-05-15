@@ -23,7 +23,7 @@ exports.createOrder = async (req, res) => {
       shippingAddress,
       paymentMethod,
       totalPrice,
-      shippingPrice: totalPrice > 5000 ? 0 : 500,
+      shippingPrice: totalPrice > 100 ? 0 : 8,
       notes,
     });
     res.status(201).json(order);
