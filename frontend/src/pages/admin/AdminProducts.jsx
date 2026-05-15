@@ -3,7 +3,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 
-const EMPTY = { name: '', description: '', price: '', oldPrice: '', category: 'homme', brand: '', volume: '', stock: '', isFeatured: false, isActive: true, variants: [] };
+const EMPTY = { name: '', description: '', price: '', oldPrice: '', category: 'homme', brand: '', volume: '', stock: '', isFeatured: false, isActive: true };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -25,34 +25,16 @@ export default function AdminProducts() {
   useEffect(() => { fetchProducts(); }, [page, search]);
 
   const openCreate = () => { setEditing(null); setForm(EMPTY); setFiles([]); setShowModal(true); };
-  const openEdit = (p) => {
-    setEditing(p);
-    setForm({ ...p, price: p.price, oldPrice: p.oldPrice || '', variants: p.variants || [] });
-    setFiles([]);
-    setShowModal(true);
-  };
-
-  // Variants helpers
-  const addVariant = () => setForm(f => ({ ...f, variants: [...f.variants, { volume: '', price: '', oldPrice: '', stock: '' }] }));
-  const removeVariant = (i) => setForm(f => ({ ...f, variants: f.variants.filter((_, idx) => idx !== i) }));
-  const setVariant = (i, k, v) => setForm(f => {
-    const variants = [...f.variants];
-    variants[i] = { ...variants[i], [k]: v };
-    return { ...f, variants };
-  });
+  const openEdit = (p) => { setEditing(p); setForm({ ...p, price: p.price, oldPrice: p.oldPrice || '' }); setFiles([]); setShowModal(true); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const fd = new FormData();
+      // Only send editable fields, not MongoDB internal arrays
       const allowed = ['name','description','price','oldPrice','category','brand','volume','stock','isFeatured','isActive'];
       allowed.forEach(k => { if (form[k] !== undefined && form[k] !== '') fd.append(k, form[k]); });
-      // Serialize variants
-      const cleanVariants = form.variants
-        .filter(v => v.volume && v.price)
-        .map(v => ({ volume: v.volume, price: Number(v.price), oldPrice: v.oldPrice ? Number(v.oldPrice) : undefined, stock: Number(v.stock) || 0 }));
-      fd.append('variants', JSON.stringify(cleanVariants));
       files.forEach(f => fd.append('images', f));
 
       if (editing) {
@@ -186,31 +168,6 @@ export default function AdminProducts() {
                 {editing?.images?.length > 0 && (
                   <div className="flex gap-2 mt-2">
                     {editing.images.map((img, i) => <img key={i} src={img} alt="" className="w-12 h-12 rounded-lg object-cover" />)}
-                  </div>
-                )}
-              </div>
-
-              {/* Variants */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">Variantes de volume (optionnel)</label>
-                  <button type="button" onClick={addVariant} className="text-xs text-gold-600 hover:text-gold-700 font-medium flex items-center gap-1">
-                    <FiPlus size={12} /> Ajouter une variante
-                  </button>
-                </div>
-                {form.variants.length > 0 && (
-                  <div className="space-y-2 bg-gray-50 rounded-xl p-3">
-                    {form.variants.map((v, i) => (
-                      <div key={i} className="grid grid-cols-4 gap-2 items-center">
-                        <input placeholder="Volume (ex: 30ml)" value={v.volume} onChange={e => setVariant(i, 'volume', e.target.value)} className="input-field text-xs py-1.5" />
-                        <input type="number" placeholder="Prix DT" value={v.price} onChange={e => setVariant(i, 'price', e.target.value)} className="input-field text-xs py-1.5" />
-                        <input type="number" placeholder="Stock" value={v.stock} onChange={e => setVariant(i, 'stock', e.target.value)} className="input-field text-xs py-1.5" />
-                        <button type="button" onClick={() => removeVariant(i)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-                          <FiTrash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    <p className="text-xs text-gray-400 mt-1">Si des variantes sont définies, le client choisira parmi elles sur la page produit.</p>
                   </div>
                 )}
               </div>

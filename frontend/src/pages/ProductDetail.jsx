@@ -15,22 +15,13 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([]);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState(null);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    api.get(`/products/${id}`).then(r => {
-      setProduct(r.data);
-      if (r.data.variants?.length > 0) setSelectedVariant(r.data.variants[0]);
-    }).catch(() => {});
+    api.get(`/products/${id}`).then(r => setProduct(r.data)).catch(() => {});
     api.get(`/reviews/product/${id}`).then(r => setReviews(r.data)).catch(() => {});
   }, [id]);
-
-  // Computed price based on selected variant
-  const displayPrice = selectedVariant ? selectedVariant.price : product?.price;
-  const displayOldPrice = selectedVariant ? selectedVariant.oldPrice : product?.oldPrice;
-  const displayStock = selectedVariant ? selectedVariant.stock : product?.stock;
 
   const handleLike = async () => {
     if (!user) return toast.error('Connectez-vous');
@@ -96,41 +87,17 @@ export default function ProductDetail() {
           </div>
 
           <div className="flex items-baseline gap-3 mb-4">
-            <span className="text-3xl font-bold text-gray-900">{displayPrice?.toLocaleString()} DT</span>
-            {displayOldPrice && <span className="text-xl text-gray-400 line-through">{displayOldPrice?.toLocaleString()} DT</span>}
+            <span className="text-3xl font-bold text-gray-900">{product.price.toLocaleString()} DT</span>
+            {product.oldPrice && <span className="text-xl text-gray-400 line-through">{product.oldPrice.toLocaleString()} DT</span>}
           </div>
 
-          <p className="text-gray-600 leading-relaxed mb-5">{product.description}</p>
-
-          {/* Variants selector */}
-          {product.variants?.length > 0 && (
-            <div className="mb-5">
-              <p className="text-sm font-medium text-gray-700 mb-2">Choisir le volume :</p>
-              <div className="flex flex-wrap gap-2">
-                {product.variants.map((v, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setSelectedVariant(v); setQty(1); }}
-                    className={`px-4 py-2 rounded-xl border-2 text-sm font-medium transition ${
-                      selectedVariant?.volume === v.volume
-                        ? 'border-gold-500 bg-gold-50 text-gold-700'
-                        : 'border-gray-200 hover:border-gold-300 text-gray-600'
-                    } ${v.stock === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
-                    disabled={v.stock === 0}
-                  >
-                    {v.volume}
-                    <span className="block text-xs font-bold mt-0.5">{v.price.toLocaleString()} DT</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <p className="text-gray-600 leading-relaxed mb-6">{product.description}</p>
 
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
             <span className="bg-gray-100 px-3 py-1 rounded-full capitalize">{product.category}</span>
-            {!product.variants?.length && product.volume && <span className="bg-gray-100 px-3 py-1 rounded-full">{product.volume}</span>}
-            <span className={`px-3 py-1 rounded-full ${displayStock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {displayStock > 0 ? `En stock (${displayStock})` : 'Rupture de stock'}
+            {product.volume && <span className="bg-gray-100 px-3 py-1 rounded-full">{product.volume}</span>}
+            <span className={`px-3 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {product.stock > 0 ? `En stock (${product.stock})` : 'Rupture de stock'}
             </span>
           </div>
 
@@ -139,17 +106,11 @@ export default function ProductDetail() {
             <div className="flex items-center border rounded-lg overflow-hidden">
               <button onClick={() => setQty(q => Math.max(1, q - 1))} className="px-3 py-2 hover:bg-gray-100 transition"><FiMinus /></button>
               <span className="px-4 py-2 font-medium">{qty}</span>
-              <button onClick={() => setQty(q => Math.min(displayStock, q + 1))} className="px-3 py-2 hover:bg-gray-100 transition"><FiPlus /></button>
+              <button onClick={() => setQty(q => Math.min(product.stock, q + 1))} className="px-3 py-2 hover:bg-gray-100 transition"><FiPlus /></button>
             </div>
             <button
-              disabled={displayStock === 0}
-              onClick={() => {
-                const cartItem = selectedVariant
-                  ? { ...product, price: selectedVariant.price, volume: selectedVariant.volume, _id: `${product._id}_${selectedVariant.volume}`, productId: product._id }
-                  : product;
-                addToCart(cartItem, qty);
-                toast.success('Ajouté au panier');
-              }}
+              disabled={product.stock === 0}
+              onClick={() => { addToCart(product, qty); toast.success('Ajouté au panier'); }}
               className="flex-1 btn-primary flex items-center justify-center gap-2"
             >
               <FiShoppingCart /> Ajouter au panier

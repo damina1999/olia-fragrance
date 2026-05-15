@@ -1,12 +1,5 @@
 const mongoose = require('mongoose');
 
-const variantSchema = new mongoose.Schema({
-  volume: { type: String, required: true }, // ex: "30ml"
-  price: { type: Number, required: true },
-  oldPrice: { type: Number },
-  stock: { type: Number, default: 0 },
-}, { _id: false });
-
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   description: { type: String, required: true },
@@ -14,8 +7,7 @@ const productSchema = new mongoose.Schema({
   oldPrice: { type: Number },
   category: { type: String, enum: ['homme', 'femme', 'unisex', 'enfant'], required: true },
   brand: { type: String, required: true },
-  volume: { type: String },
-  variants: [variantSchema], // multiple volumes with prices
+  volume: { type: String }, // ex: "100ml"
   images: [{ type: String }],
   stock: { type: Number, default: 0, min: 0 },
   isActive: { type: Boolean, default: true },

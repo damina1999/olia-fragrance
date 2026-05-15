@@ -58,10 +58,6 @@ exports.getProducts = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     const images = req.files?.map(f => f.path) || [];
-    let variants = [];
-    if (req.body.variants) {
-      try { variants = JSON.parse(req.body.variants); } catch {}
-    }
     const data = {
       name: req.body.name,
       description: req.body.description,
@@ -74,7 +70,6 @@ exports.createProduct = async (req, res) => {
       isFeatured: req.body.isFeatured === 'true',
       isActive: req.body.isActive !== 'false',
       images,
-      variants,
     };
     const product = await Product.create(data);
     res.status(201).json(product);
@@ -85,11 +80,8 @@ exports.createProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
+    // Remove fields that should not be updated via form
     const { likes, dislikes, avgRating, reviewCount, createdAt, updatedAt, _id, __v, ...rest } = req.body;
-    let variants = rest.variants;
-    if (typeof variants === 'string') {
-      try { variants = JSON.parse(variants); } catch { variants = []; }
-    }
     const update = {
       ...rest,
       price: Number(rest.price),
@@ -97,7 +89,6 @@ exports.updateProduct = async (req, res) => {
       stock: Number(rest.stock),
       isFeatured: rest.isFeatured === 'true',
       isActive: rest.isActive !== 'false',
-      variants: variants || [],
     };
     if (req.files?.length) update.images = req.files.map(f => f.path);
     const product = await Product.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
