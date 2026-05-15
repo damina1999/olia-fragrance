@@ -1,21 +1,21 @@
 const mongoose = require('mongoose');
 
 const variantSchema = new mongoose.Schema({
-  volume: { type: String, required: true }, // ex: "30ml", "50ml", "100ml"
-  price: { type: Number, required: true, min: 0 },
+  volume: { type: String, required: true }, // ex: "30ml"
+  price: { type: Number, required: true },
   oldPrice: { type: Number },
-  stock: { type: Number, default: 0, min: 0 },
+  stock: { type: Number, default: 0 },
 }, { _id: false });
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   description: { type: String, required: true },
-  price: { type: Number, required: true, min: 0 }, // prix de base (si pas de variantes)
+  price: { type: Number, required: true, min: 0 },
   oldPrice: { type: Number },
   category: { type: String, enum: ['homme', 'femme', 'unisex', 'enfant'], required: true },
   brand: { type: String, required: true },
-  volume: { type: String }, // volume unique (si pas de variantes)
-  variants: [variantSchema], // variantes de volume avec prix différents
+  volume: { type: String },
+  variants: [variantSchema], // multiple volumes with prices
   images: [{ type: String }],
   stock: { type: Number, default: 0, min: 0 },
   isActive: { type: Boolean, default: true },
