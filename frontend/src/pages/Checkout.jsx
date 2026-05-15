@@ -9,7 +9,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    fullName: '', address: '', city: '', postalCode: '', country: 'Algérie', phone: '',
+    fullName: '', address: '', city: '', postalCode: '', country: 'Tunisia', phone: '',
   });
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
