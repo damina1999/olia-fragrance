@@ -19,9 +19,15 @@ export default function Register() {
     if (form.password !== form.confirm) return toast.error('Les mots de passe ne correspondent pas');
     setLoading(true);
     try {
-      await api.post('/auth/register', { name: form.name, email: form.email, password: form.password });
-      toast.success('Code envoyé sur votre email !');
-      setStep('verify');
+      const { data } = await api.post('/auth/register', { name: form.name, email: form.email, password: form.password });
+      if (data.token) {
+        login(data.token, data.user);
+        toast.success('Compte créé ! Bienvenue 🎉');
+        navigate('/');
+      } else {
+        toast.success('Compte créé ! Vous pouvez vous connecter.');
+        navigate('/login');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Erreur lors de l\'inscription');
     } finally {
