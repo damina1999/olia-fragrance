@@ -3,30 +3,60 @@ import { FiPlus, FiTrash2, FiEdit2, FiEye, FiEyeOff } from 'react-icons/fi';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 
-const empty = { title: '', description: '', image: '', link: '', isActive: true, order: 0 };
+const empty = { title: '', description: '', link: '', isActive: true, order: 0 };
 
 export default function AdminEvents() {
   const [events, setEvents] = useState([]);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
 
   const fetch = () => api.get('/admin/events').then(r => setEvents(r.data)).catch(() => {});
   useEffect(() => { fetch(); }, []);
 
-  const openCreate = () => { setEditing(null); setForm(empty); setModal(true); };
-  const openEdit = (ev) => { setEditing(ev._id); setForm({ title: ev.title, description: ev.description, image: ev.image, link: ev.link, isActive: ev.isActive, order: ev.order }); setModal(true); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm(empty);
+    setImageFile(null);
+    setImagePreview('');
+    setModal(true);
+  };
+
+  const openEdit = (ev) => {
+    setEditing(ev._id);
+    setForm({ title: ev.title, description: ev.description, link: ev.link, isActive: ev.isActive, order: ev.order });
+    setImageFile(null);
+    setImagePreview(ev.image || '');
+    setModal(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
+      const fd = new FormData();
+      fd.append('title', form.title);
+      fd.append('description', form.description);
+      fd.append('link', form.link);
+      fd.append('isActive', form.isActive);
+      fd.append('order', form.order);
+      if (imageFile) fd.append('images', imageFile);
+
       if (editing) {
-        await api.put(`/admin/events/${editing}`, form);
+        await api.put(`/admin/events/${editing}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         toast.success('Événement mis à jour');
       } else {
-        await api.post('/admin/events', form);
+        await api.post('/admin/events', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         toast.success('Événement créé');
       }
       setModal(false);
@@ -43,7 +73,13 @@ export default function AdminEvents() {
   };
 
   const toggleActive = async (ev) => {
-    await api.put(`/admin/events/${ev._id}`, { ...ev, isActive: !ev.isActive });
+    const fd = new FormData();
+    fd.append('title', ev.title);
+    fd.append('description', ev.description);
+    fd.append('link', ev.link || '');
+    fd.append('isActive', !ev.isActive);
+    fd.append('order', ev.order);
+    await api.put(`/admin/events/${ev._id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     fetch();
   };
 
@@ -117,11 +153,31 @@ export default function AdminEvents() {
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
                 <textarea value={form.description} onChange={e => set('description', e.target.value)} className="input-field resize-none" rows={3} placeholder="Description de l'événement..." />
               </div>
+
+              {/* Image upload */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">URL de l'image</label>
-                <input value={form.image} onChange={e => set('image', e.target.value)} className="input-field" placeholder="https://..." />
-                {form.image && <img src={form.image} alt="preview" className="mt-2 h-24 w-full object-cover rounded-lg" onError={e => e.target.style.display='none'} />}
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Image du carousel</label>
+                <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-gold-400 hover:bg-gold-50 transition overflow-hidden relative">
+                  {imagePreview ? (
+                    <>
+                      <img src={imagePreview} alt="preview" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition rounded-xl">
+                        <span className="text-white text-sm font-medium">Changer l'image</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center text-gray-400">
+                      <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm">Cliquer pour importer une image</span>
+                      <span className="text-xs text-gray-300 mt-1">JPG, PNG, WEBP</span>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                </label>
               </div>
+
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Lien (optionnel)</label>
                 <input value={form.link} onChange={e => set('link', e.target.value)} className="input-field" placeholder="https://..." />
