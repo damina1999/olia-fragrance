@@ -8,6 +8,8 @@ const app = express();
 // CORS configuration
 const allowedOrigins = [
   'https://olia-fragrance.vercel.app',
+  'https://www.olia-fragrance.tn',
+  'https://olia-fragrance.tn',
   'http://localhost:5173',
   'http://localhost:3000',
   process.env.CLIENT_URL,
