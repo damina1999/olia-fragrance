@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import { cloudinaryUrl } from '../utils/cloudinary';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
@@ -39,21 +40,21 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <Link to={`/products/${product._id}`} className="card group block overflow-hidden">
+    <Link to={`/products/${product._id}`} className="card group block overflow-hidden hover:scale-[1.01] transform-gpu">
       {/* Image */}
       <div className="relative overflow-hidden aspect-square bg-gray-100">
         <img
-          src={product.images?.[0] || '/placeholder.jpg'}
+          src={cloudinaryUrl(product.images?.[0] || '/placeholder.jpg', { width: 800 })}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {product.oldPrice && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-danger text-white text-xs px-2 py-1 rounded-full shadow-sm">
             -{Math.round((1 - product.price / product.oldPrice) * 100)}%
           </span>
         )}
         {product.isFeatured && (
-          <span className="absolute top-2 right-2 bg-gold-500 text-white text-xs px-2 py-1 rounded-full">
+          <span className="absolute top-3 right-3 bg-gradient-to-r from-gold-400 to-oldgold text-dark-900 text-xs px-2 py-1 rounded-full shadow-sm font-medium">
             Vedette
           </span>
         )}
@@ -62,13 +63,13 @@ export default function ProductCard({ product }) {
       {/* Info */}
       <div className="p-4">
         <p className="text-xs text-gold-500 font-medium uppercase tracking-wide">{product.brand}</p>
-        <h3 className="font-serif text-gray-900 font-semibold mt-1 line-clamp-1">{product.name}</h3>
-        <p className="text-xs text-gray-500 mt-0.5">{product.volume} · {product.category}</p>
+        <h3 className="font-serif text-gray-900 font-semibold mt-1 line-clamp-1 text-lg">{product.name}</h3>
+        <p className="text-sm text-gray-500 mt-0.5">{product.volume || ''} {product.category ? `· ${product.category}` : ''}</p>
 
         {/* Rating */}
-        <div className="flex items-center gap-1 mt-2">
+        <div className="flex items-center gap-2 mt-2">
           {[1,2,3,4,5].map(s => (
-            <FiStar key={s} size={12} className={s <= Math.round(product.avgRating) ? 'text-gold-400 fill-gold-400' : 'text-gray-300'} />
+            <FiStar key={s} size={14} className={s <= Math.round(product.avgRating) ? 'text-gold-400' : 'text-gray-200'} />
           ))}
           <span className="text-xs text-gray-500 ml-1">({product.reviewCount})</span>
         </div>
@@ -86,7 +87,7 @@ export default function ProductCard({ product }) {
         <div className="flex items-center gap-2 mt-3">
           <button
             onClick={(e) => { e.preventDefault(); addToCart(product); toast.success('Ajouté au panier'); }}
-            className="flex-1 btn-primary text-sm py-2 flex items-center justify-center gap-1"
+            className="flex-1 btn-primary text-sm py-2 flex items-center justify-center gap-2"
           >
             <FiShoppingCart size={14} /> Ajouter
           </button>

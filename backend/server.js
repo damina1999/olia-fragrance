@@ -5,6 +5,20 @@ require('dotenv').config();
 
 const app = express();
 
+// Security middlewares
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+
+app.use(helmet());
+
+// Basic rate limiter: 100 requests per 15 minutes per IP
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+app.use(limiter);
+
+// Prevent MongoDB operator injection
+app.use(mongoSanitize());
+
 // CORS configuration
 const allowedOrigins = [
   'https://olia-fragrance.vercel.app',
@@ -35,6 +49,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/marketing', require('./routes/marketing'));
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'Parfum Shop API running' }));

@@ -24,6 +24,18 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, cartKey: key, quantity }];
     });
+    // Send a lightweight abandoned-cart snapshot (throttled to once per hour)
+    try {
+      const last = Number(localStorage.getItem('lastAbandonedSent') || 0);
+      const now = Date.now();
+      if (now - last > 1000 * 60 * 60) {
+        localStorage.setItem('lastAbandonedSent', String(now));
+        const snapshot = { cart: JSON.parse(localStorage.getItem('cart') || '[]') };
+        fetch('/api/marketing/abandoned', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snapshot),
+        }).catch(() => {});
+      }
+    } catch (e) {}
   };
 
   const removeFromCart = (key) => setCart(prev => prev.filter(i => (i.cartKey || itemKey(i)) !== key));

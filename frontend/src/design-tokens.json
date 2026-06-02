@@ -1,0 +1,36 @@
+{
+  "colors": {
+    "deepNavy": "#0F1A2B",
+    "oldGold": "#C9A84D",
+    "accentGold": "#D4AF37",
+    "cream": "#F5F1E8",
+    "porcelain": "#FBFAF8",
+    "warmGray": "#F3F1EE",
+    "success": "#2F9D66",
+    "error": "#D7263D",
+    "muted": "#6E6B68"
+  },
+  "typography": {
+    "brand": "Playfair Display",
+    "ui": "Inter",
+    "scale": {
+      "h1": "56px",
+      "h2": "40px",
+      "h3": "28px",
+      "body": "16px",
+      "small": "14px"
+    }
+  },
+  "spacing": {
+    "xs": "4px",
+    "s": "8px",
+    "m": "16px",
+    "l": "24px",
+    "xl": "32px",
+    "xxl": "48px"
+  },
+  "shadows": {
+    "card": "0 6px 18px rgba(12,12,20,0.06)",
+    "modal": "0 20px 60px rgba(12,12,20,0.12)"
+  }
+}

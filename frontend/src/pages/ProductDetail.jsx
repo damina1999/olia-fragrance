@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FiHeart, FiThumbsDown, FiShoppingCart, FiMinus, FiPlus } from 'react-icons/fi';
 import api from '../api/axios';
+import { cloudinaryUrl } from '../utils/cloudinary';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
+import StickyAddToCart from '../components/StickyAddToCart';
 import toast from 'react-hot-toast';
 
 export default function ProductDetail() {
@@ -83,26 +85,35 @@ export default function ProductDetail() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="grid md:grid-cols-2 gap-10">
-        {/* Images */}
+        {/* Left: Images */}
         <div>
-          <div className="rounded-2xl overflow-hidden bg-gray-100 aspect-square mb-3">
-            <img src={product.images?.[activeImg] || '/placeholder.jpg'} alt={product.name} className="w-full h-full object-cover" />
+          <div className="rounded-lg overflow-hidden mb-4">
+            <img
+              src={cloudinaryUrl(product.images?.[activeImg] || product.images?.[0] || '', { w: 900, q: 80 })}
+              alt={product.name}
+              className="w-full object-cover"
+            />
           </div>
           {product.images?.length > 1 && (
             <div className="flex gap-2">
               {product.images.map((img, i) => (
-                <button key={i} onClick={() => setActiveImg(i)} className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition ${activeImg === i ? 'border-gold-500' : 'border-transparent'}`}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                <button
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition ${activeImg === i ? 'border-gold-500' : 'border-transparent'}`}
+                >
+                  <img src={cloudinaryUrl(img, { w: 160, q: 70 })} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Info */}
+        {/* Right: Info */}
         <div>
-          <p className="text-gold-500 font-medium uppercase tracking-wide text-sm">{product.brand}</p>
-          <h1 className="text-3xl font-serif font-bold mt-1 mb-2">{product.name}</h1>
+          <p className="text-gold-400 font-medium uppercase tracking-wide text-sm">{product.brand}</p>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold mt-1 mb-2">{product.name}</h1>
+
           <div className="flex items-center gap-3 mb-4">
             <StarRating value={product.avgRating} readonly />
             <span className="text-gray-500 text-sm">{product.avgRating} ({product.reviewCount} avis)</span>
@@ -111,6 +122,9 @@ export default function ProductDetail() {
           <div className="flex items-baseline gap-3 mb-5">
             <span className="text-3xl font-bold text-gray-900">{currentPrice?.toLocaleString()} DT</span>
             {currentOldPrice && <span className="text-xl text-gray-400 line-through">{currentOldPrice?.toLocaleString()} DT</span>}
+            {currentOldPrice && (
+              <span className="ml-3 px-2 py-1 bg-danger text-white text-xs rounded">-{Math.round((1 - currentPrice / currentOldPrice) * 100)}%</span>
+            )}
           </div>
 
           <p className="text-gray-600 leading-relaxed mb-5">{product.description}</p>
@@ -123,28 +137,42 @@ export default function ProductDetail() {
             </span>
           </div>
 
+          {/* Sticky add-to-cart for mobile */}
+          <StickyAddToCart
+            product={product}
+            selectedVariant={selectedVariant}
+            qty={qty}
+            setQty={setQty}
+            handleAddToCart={handleAddToCart}
+            currentPrice={currentPrice}
+            currentStock={currentStock}
+            hasVariants={hasVariants}
+          />
+
           {/* Variant selector */}
           {hasVariants && (
-            <div className="mb-5">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Choisir le volume :</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-3">Choisir le volume :</p>
+              <div className="flex flex-wrap gap-3">
                 {product.variants.map((v, i) => (
                   <button
                     key={i}
                     onClick={() => { setSelectedVariant(v); setQty(1); }}
                     disabled={v.stock === 0}
-                    className={`relative px-4 py-2 rounded-xl border-2 text-sm font-medium transition ${
+                    className={`relative px-4 py-2 rounded-2xl text-sm font-medium transition ${
                       selectedVariant?.volume === v.volume
-                        ? 'border-gold-500 bg-gold-50 text-gold-700'
+                        ? 'bg-gold-50 border border-gold-300 text-gold-700 shadow-inner'
                         : v.stock === 0
-                        ? 'border-gray-200 text-gray-300 cursor-not-allowed bg-gray-50'
-                        : 'border-gray-200 hover:border-gold-300 text-gray-700'
+                        ? 'border border-gray-100 text-gray-300 cursor-not-allowed bg-gray-50'
+                        : 'border border-gray-200 text-gray-700 hover:border-gold-300 hover:shadow-sm'
                     }`}
                   >
-                    <span>{v.volume}</span>
-                    <span className="block text-xs font-bold mt-0.5">{v.price} DT</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-semibold">{v.volume}</span>
+                      <span className="text-xs text-gray-500">{v.price} DT</span>
+                    </div>
                     {v.stock === 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">✕</span>
+                      <span className="absolute -top-2 -right-2 bg-danger text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">✕</span>
                     )}
                   </button>
                 ))}

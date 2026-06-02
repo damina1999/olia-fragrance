@@ -35,23 +35,95 @@ export default function Home() {
   const prev = () => goTo((currentSlide - 1 + events.length) % events.length);
   const next = () => goTo((currentSlide + 1) % events.length);
 
+  // Reveal-on-scroll and parallax helpers
+  useEffect(() => {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) e.target.classList.add('in-view');
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.will-animate').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const el = document.querySelector('.parallax-media');
+    if (!el) return;
+    const onScroll = () => {
+      const rect = el.getBoundingClientRect();
+      const offset = Math.max(-80, Math.min(80, (window.innerHeight / 2 - rect.top) * 0.06));
+      el.style.transform = `translateY(${offset}px)`;
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <div>
+    <div className="relative">
       {/* Hero */}
-      <section className="relative bg-dark-900 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-dark-900 via-dark-900/80 to-transparent z-10" />
-        <div className="absolute inset-0 bg-cover bg-center opacity-30"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1541643600914-78b084683702?w=1600')" }} />
-        <div className="relative z-20 max-w-7xl mx-auto px-4 py-32">
-          <p className="text-gold-400 font-medium tracking-widest uppercase text-sm mb-4">Collection Exclusive</p>
-          <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-3">Olia<br />Fragrance</h1>
-          <p className="text-gold-400 font-serif italic text-lg mb-6">— The Essence of Beauty —</p>
-          <p className="text-white/70 text-lg max-w-md mb-8">
-            Découvrez notre sélection de parfums de luxe, soigneusement choisis pour sublimer chaque moment.
-          </p>
-          <div className="flex gap-4">
-            <Link to="/products" className="btn-primary text-base px-8 py-3">Explorer la boutique</Link>
-            <Link to="/products?category=femme" className="btn-outline text-base px-8 py-3">Pour elle</Link>
+      <section className="relative overflow-hidden text-white isolate bg-dark-900">
+        {/* Background video — put a file at /public/videos/hero.mp4 or replace the src with your hosted video URL */}
+        <video className="absolute inset-0 w-full h-full object-cover opacity-40" autoPlay muted loop playsInline>
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 opacity-75"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 15% 10%, rgba(212,168,67,0.22), transparent 35%), radial-gradient(circle at 85% 80%, rgba(35,37,58,0.6), transparent 35%), linear-gradient(120deg, #0d0f1a 0%, #121526 45%, #0f1120 100%)"
+          }}
+        />
+        <div className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(90deg, rgba(212,168,67,0.18), rgba(212,168,67,0.18) 1px, transparent 1px, transparent 28px)'
+          }}
+        />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-16 md:py-24">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <p className="text-gold-400 font-medium tracking-[0.22em] uppercase text-xs md:text-sm mb-4">Collection Exclusive</p>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-serif font-bold leading-[0.94] mb-4">Olia<br />Fragrance</h1>
+              <p className="text-gold-300 font-serif italic text-lg md:text-xl mb-6">The Essence of Beauty</p>
+              <p className="text-white/75 text-lg max-w-xl mb-9 leading-relaxed">
+                Une maison olfactive moderne qui marie sillage raffine, matieres nobles et personnalite. Choisissez un parfum qui marque votre presence.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/products" className="btn-primary text-base px-8 py-3">Explorer la boutique</Link>
+                <Link to="/products?category=femme" className="btn-outline text-base px-8 py-3 border-white/20 text-white hover:text-dark-900 hover:bg-gold-300">Pour elle</Link>
+                <Link to="/products?category=homme" className="btn-outline text-base px-8 py-3 border-white/20 text-white hover:text-dark-900 hover:bg-gold-300">Pour lui</Link>
+              </div>
+              <div className="mt-10 grid grid-cols-3 gap-3 max-w-xl">
+                <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur px-4 py-3 will-animate">
+                  <p className="text-gold-300 text-xl font-semibold">12</p>
+                  <p className="text-xs uppercase tracking-wide text-white/70">Signatures</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur px-4 py-3 will-animate">
+                  <p className="text-gold-300 text-xl font-semibold">24h</p>
+                  <p className="text-xs uppercase tracking-wide text-white/70">Expedition</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur px-4 py-3 will-animate">
+                  <p className="text-gold-300 text-xl font-semibold">4.9</p>
+                  <p className="text-xs uppercase tracking-wide text-white/70">Satisfaction</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-5 bg-gold-400/10 blur-3xl rounded-full will-animate" />
+              <div className="relative rounded-[2rem] border border-white/10 bg-white/5 p-3 backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.35)] will-animate">
+                <div className="parallax-media overflow-hidden rounded-[1.6rem] w-full h-[420px] md:h-[520px]">
+                  <img
+                    src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1200&q=80"
+                    alt="Parfum de luxe"
+                    className="w-full h-full object-cover transform-gpu transition-transform duration-700"
+                  />
+                </div>
+                <div className="absolute bottom-7 left-7 right-7 rounded-2xl bg-dark-900/72 border border-white/15 px-5 py-4 will-animate">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gold-300 mb-1">Edition Signature</p>
+                  <p className="font-serif text-2xl">Sillage Precieux</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -117,8 +189,9 @@ export default function Home() {
       {/* Collections */}
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="text-center mb-12">
-          <p className="text-gold-500 tracking-widest uppercase text-xs font-medium mb-2">Explorez</p>
-          <h2 className="text-4xl font-serif text-dark-900">Nos Collections</h2>
+          <p className="text-gold-500 tracking-[0.26em] uppercase text-xs font-medium mb-2">Explorez</p>
+          <h2 className="text-4xl md:text-5xl font-serif text-dark-900">Nos Collections</h2>
+          <p className="text-muted max-w-xl mx-auto mt-4">Une selection equilibree entre elegant, intense et lumineux, concue pour chaque identite.</p>
           <div className="w-16 h-0.5 bg-gold-400 mx-auto mt-4" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
@@ -150,7 +223,10 @@ export default function Home() {
       {/* Featured products */}
       <section className="max-w-7xl mx-auto px-4 pb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-serif">Meilleures Ventes</h2>
+          <div>
+            <p className="text-gold-500 tracking-[0.2em] uppercase text-xs font-medium mb-2">Selection Premium</p>
+            <h2 className="text-3xl md:text-4xl font-serif">Meilleures Ventes</h2>
+          </div>
           <Link to="/products" className="text-gold-500 hover:text-gold-600 font-medium text-sm">Voir tout →</Link>
         </div>
         {loading ? (
@@ -165,9 +241,10 @@ export default function Home() {
       </section>
 
       {/* Banner */}
-      <section className="bg-gradient-to-r from-dark-900 to-dark-800 text-white py-16 text-center">
-        <h2 className="font-serif text-3xl mb-3">Livraison 8 DT — Gratuite dès 100 DT</h2>
-        <p className="text-white/60 mb-6">Commandez maintenant et recevez votre parfum en 24-48h</p>
+      <section className="relative overflow-hidden bg-gradient-to-r from-dark-900 to-dark-800 text-white py-16 text-center">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, #d4a843, transparent 20%), radial-gradient(circle at 80% 70%, #d4a843, transparent 20%)' }} />
+        <h2 className="relative font-serif text-3xl md:text-4xl mb-3">Livraison 8 DT — Gratuite des 100 DT</h2>
+        <p className="relative text-white/65 mb-6">Commandez maintenant et recevez votre parfum en 24-48h</p>
         <Link to="/products" className="btn-primary px-10 py-3 text-base">Commander maintenant</Link>
       </section>
     </div>
