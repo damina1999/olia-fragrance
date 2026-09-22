@@ -1,0 +1,247 @@
+const Product = require('../models/Product');
+const Order = require('../models/Order');
+const User = require('../models/User');
+
+// GET /api/admin/stats
+exports.getStats = async (req, res) => {
+  try {
+    const [totalProducts, totalOrders, totalUsers, revenueData, recentOrders] = await Promise.all([
+      Product.countDocuments(),
+      Order.countDocuments(),
+      User.countDocuments({ role: 'client' }),
+      Order.aggregate([
+        { $match: { status: { $ne: 'cancelled' } } },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+      ]),
+      Order.find().sort({ createdAt: -1 }).limit(5).populate('user', 'name email'),
+    ]);
+
+    const ordersByStatus = await Order.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const monthlyRevenue = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' }, createdAt: { $gte: new Date(new Date().setMonth(new Date().getMonth() - 6)) } } },
+      { $group: { _id: { month: { $month: '$createdAt' }, year: { $year: '$createdAt' } }, revenue: { $sum: '$totalPrice' }, orders: { $sum: 1 } } },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    res.json({
+      totalProducts,
+      totalOrders,
+      totalUsers,
+      totalRevenue: revenueData[0]?.total || 0,
+      ordersByStatus,
+      recentOrders,
+      monthlyRevenue,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Products
+exports.getProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search } = req.query;
+    const filter = search ? { $or: [{ name: new RegExp(search, 'i') }, { brand: new RegExp(search, 'i') }] } : {};
+    const [products, total] = await Promise.all([
+      Product.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(Number(limit)),
+      Product.countDocuments(filter),
+    ]);
+    res.json({ products, total });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.createProduct = async (req, res) => {
+  try {
+    const images = req.files?.map(f => f.path) || [];
+    let variants = [];
+    try { variants = JSON.parse(req.body.variants || '[]'); } catch {}
+    const data = {
+      name: req.body.name,
+      description: req.body.description,
+      brand: req.body.brand,
+      category: req.body.category,
+      isFeatured: req.body.isFeatured === 'true',
+      isActive: req.body.isActive !== 'false',
+      images,
+      variants,
+      // legacy fallback
+      price: variants.length ? (variants[0].price || 0) : Number(req.body.price || 0),
+      oldPrice: req.body.oldPrice ? Number(req.body.oldPrice) : undefined,
+      volume: req.body.volume || '',
+      stock: variants.length ? variants.reduce((s, v) => s + (v.stock || 0), 0) : Number(req.body.stock || 0),
+    };
+    const product = await Product.create(data);
+    res.status(201).json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateProduct = async (req, res) => {
+  try {
+    const { likes, dislikes, avgRating, reviewCount, createdAt, updatedAt, _id, __v, ...rest } = req.body;
+    let variants = [];
+    try { variants = JSON.parse(rest.variants || '[]'); } catch {}
+    const update = {
+      name: rest.name,
+      description: rest.description,
+      brand: rest.brand,
+      category: rest.category,
+      isFeatured: rest.isFeatured === 'true',
+      isActive: rest.isActive !== 'false',
+      variants,
+      price: variants.length ? (variants[0].price || 0) : Number(rest.price || 0),
+      oldPrice: rest.oldPrice ? Number(rest.oldPrice) : undefined,
+      volume: rest.volume || '',
+      stock: variants.length ? variants.reduce((s, v) => s + (v.stock || 0), 0) : Number(rest.stock || 0),
+    };
+    if (req.files?.length) update.images = req.files.map(f => f.path);
+    const product = await Product.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
+    if (!product) return res.status(404).json({ message: 'Produit introuvable' });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Produit introuvable' });
+    res.json({ message: 'Produit supprimé' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Orders
+exports.getOrders = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const filter = status ? { status } : {};
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(Number(limit)).populate('user', 'name email phone'),
+      Order.countDocuments(filter),
+    ]);
+    res.json({ orders, total });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Commande introuvable' });
+
+    const previousStatus = order.status;
+    order.status = status;
+    await order.save();
+
+    // Restore stock if switching to cancelled from a non-cancelled status
+    if (status === 'cancelled' && previousStatus !== 'cancelled') {
+      const { restoreStock } = require('./orderController');
+      await restoreStock(order.items);
+    }
+
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Users
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password -otp').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateUserRole = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { role: req.body.role }, { new: true }).select('-password');
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Events
+const Event = require('../models/Event');
+
+exports.getEvents = async (req, res) => {
+  try {
+    const events = await Event.find().sort({ order: 1, createdAt: -1 });
+    res.json(events);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.createEvent = async (req, res) => {
+  try {
+    const image = req.files?.[0]?.path || req.body.image || '';
+    const event = await Event.create({ ...req.body, image });
+    res.status(201).json(event);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.updateEvent = async (req, res) => {
+  try {
+    const image = req.files?.[0]?.path || req.body.image;
+    const update = { ...req.body };
+    if (image) update.image = image;
+    const event = await Event.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!event) return res.status(404).json({ message: 'Événement introuvable' });
+    res.json(event);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.deleteEvent = async (req, res) => {
+  try {
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Événement supprimé' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// Reviews
+const Review = require('../models/Review');
+
+exports.getAllReviews = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search } = req.query;
+    const filter = search ? { comment: new RegExp(search, 'i') } : {};
+    const [reviews, total] = await Promise.all([
+      Review.find(filter)
+        .populate('user', 'name email avatar')
+        .populate('product', 'name images')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Review.countDocuments(filter),
+    ]);
+    res.json({ reviews, total });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deleteReview = async (req, res) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+    if (!review) return res.status(404).json({ message: 'Avis introuvable' });
+    // Update product rating
+    const product = await require('../models/Product').findById(review.product);
+    if (product) await product.updateRating();
+    res.json({ message: 'Avis supprimé' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
